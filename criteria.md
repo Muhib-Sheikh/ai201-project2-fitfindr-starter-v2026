@@ -24,10 +24,12 @@ data earns credit; *"80% seemed reasonable"* does not.
 Given a query that matches at least one listing, the agent completes all three
 tool calls and returns a fit card — in at least 4 of 5 tries.
 
-**Why this target:**
 <!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
      "my search is a plain keyword match and some phrasings will miss" is a
      real answer. -->
+
+**Why this target:**
+My search only uses a basic keyword match, so its possible that some phrases will miss. 
 
 ---
 
@@ -36,9 +38,10 @@ tool calls and returns a fit card — in at least 4 of 5 tries.
 Given a query that matches no listings, the agent stops before calling
 `suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
 
-**Why this target:**
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
      about this path? -->
+**Why this target:**
+This path does not vary and there is no judgement required. If there are no matches, the agent should stop every time. 
 
 ---
 
@@ -54,10 +57,11 @@ Given a query that matches no listings, the agent stops before calling
      compares session["selected_item"] against what actually reached
      suggest_outfit is the shape you're after. -->
 
+The ID of the item in `session["selected_item"]` must match the ID of the item passed to `suggest_outfit` - 5 of 5 times. 
 
 
 **Why this target:**
-
+Passing state from one function to another should be consistent. If this fails, it means there is an issue with how the state is being managed.
 
 
 ---
@@ -75,10 +79,10 @@ Given a query that matches no listings, the agent stops before calling
      sentence? A card longer than a caption anyone would post? Any of those can
      be turned into a number. -->
 
-
+The fit card must not be longer than 2 sentences and it must mention the selected item - 4 of 5 times.
 
 **Why this target:**
-
+The caption should not be too long because it should be something people would post. The model may vary its wording and length, so 4 of 5 is a reasonable target.
 
 
 ---
@@ -91,11 +95,11 @@ Given a query that matches no listings, the agent stops before calling
      wardrobe path, what happens when the model can't be reached, whether the
      search respects a price ceiling — anything, as long as it names a number
      or an observable outcome. -->
-
+Given a question with a maximum price, `search_listings` returns only listings whose price is less than or equal to the requested max price - 5 of 5 times. 
 
 
 **Why this target:**
-
+This is objective and straightforward, so the search tool should always respect the max price.
 
 
 ---
