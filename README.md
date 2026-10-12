@@ -59,24 +59,24 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches all available listings for any items that match the requested size, description, and maximum price. 
+- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" --> max_price(float | None), size (str | None), description (str)
+- **Returns:** A list of listing dictionaries, each with title, id, description, category, style_tags, size, condition, colors, brand, price, and platform. 
+- **When it has nothing:** Returns an empty list.
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggests an outfit based on the selected listing with items from the wardrobe.
+- **Inputs:** new_item (dict), wardrobe (dict)
+- **Returns:** A string containing a new outfit based on the new item and compatible pieces from the wardrobe.
+- **When it has nothing:** Returns general styling advice for the new item.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Creates a short caption describing the new item and suggested outfit.
+- **Inputs:** new_item (dict), outfit (str)
+- **Returns:** A string containing a short fit card caption that someone could use.
+- **When it has nothing:** Returns a short message stating there is not enough information to make the fit card.
 
 ---
 
@@ -93,7 +93,7 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** If search_listings returns an empty list, put a message in the session telling the user what they could change about their search and stop. Otherwise, take the first search result, store it as the selected item, and go to suggest_outfit.
 
 **Where it lives:** `agent.py::run_agent`
 
