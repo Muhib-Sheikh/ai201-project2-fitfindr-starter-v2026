@@ -98,8 +98,9 @@
 **Where it lives:** `agent.py::run_agent`
 
 **How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+I used regex to get the size and max price from the user query. The rest of the query becomes the description for the listing search.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** <!-- which fields, in what order --> First the query and parsed values are stored, then the search results and selected item. The item is used to create an outfit suggestion, which is stored in the session before creating and storing the final fit card.
 
 ---
 
@@ -113,7 +114,17 @@
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30'
+
+Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+Outfit:   **Outfit 1: Casual Y2K Streetwear**
+Pair the butterfly baby tee with your **baggy straight-leg jeans** (dark wash) and **chunky white sneakers**. Throw the **black cropped zip hoodie** over your shoulders or layer it on top, and finish with the **black crossbody bag** for an easy, everyday 2000s look.
+
+**Outfit 2: Edgy Contrast**
+Tuck the baby tee into your **wide-leg khaki trousers** and wear it with the **black combat boots**. Add the **vintage black denim jacket** on top to balance out the sweet butterfly print with some grunge texture.
+
+Fit card: This Y2K butterfly baby tee is giving total early 2000s street style vibes and is up on my Depop for just $18. Grab it to complete your next casual outfit!
 
 ```
 
@@ -122,16 +133,23 @@ $ python app.py ask '...'
 ```
 $ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
 
+[('Y2K Baby Tee — Butterfly Print', 18.0), ('Graphic Tee — 2003 Tour Bootleg Style', 24.0), ('Mesh Long-Sleeve Top — Black', 15.0), ('Vintage Band Tee — Faded Grey', 19.0), ('Low-Rise Cargo Pants — Khaki', 27.0), ('Vintage Graphic Hoodie — Faded Black', 26.0)]
 ```
 
 ```
-$ python -c "from tools import suggest_outfit; ..."
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
 
+**Outfit 1: Casual Streetwear**
+Pair the vintage 501s with the **white ribbed tank top** and the **black cropped zip hoodie** layered over top. Finish the look with the **chunky white sneakers** and the **black crossbody bag** for an easy, everyday outfit.
+
+**Outfit 2: Cozy & Classic**
+Tuck the **oversized grey crewneck sweatshirt** into the jeans, accent with the **brown leather belt**, and wear them with the **black combat boots** and the **vintage black denim jacket** thrown over your shoulders.
 ```
 
 ```
-$ python -c "from tools import create_fit_card; ..."
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
 
+Rocking these vintage Levi's 501 jeans with fresh white sneakers for the ultimate effortless streetwear vibe. Snagged this medium wash pair for just $38.00 on depop and they fit like a dream!
 ```
 
 ---
