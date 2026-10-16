@@ -41,6 +41,8 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
+FitFindr is an agent that lets a user search for thrifted clothes based on a description, size, and max price. It searches the listings, picks the best matching item, and suggests outfits using the user's wardrobe. Then it creates a fit-card caption based on the selected item and outfit. If there is no match, it just gives some advice to the user on what they could change about their search.
+
 
 
 ---
@@ -131,7 +133,7 @@ Fit card: This Y2K butterfly baby tee is giving total early 2000s street style v
 **The three tools, tested one at a time**
 
 ```
-$ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
+$ python -c "from tools import search_listings; print([(x['title'], x['price']) for x in search_listings('graphic tee', max_price=30)])"
 
 [('Y2K Baby Tee — Butterfly Print', 18.0), ('Graphic Tee — 2003 Tour Bootleg Style', 24.0), ('Mesh Long-Sleeve Top — Black', 15.0), ('Vintage Band Tee — Faded Grey', 19.0), ('Low-Rise Cargo Pants — Khaki', 27.0), ('Vintage Graphic Hoodie — Faded Black', 26.0)]
 ```
@@ -165,15 +167,15 @@ Rocking these vintage Levi's 501 jeans with fresh white sneakers for the ultimat
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked an LLM to help me understand the `search_listings` function and discussed some approaches.
+- *What came back:* It mentioned how a simple substring wouldn't work, but a split and filter method would be better. It also helped me realize we can use regex to handle sizes better.
+- *What I changed:* I kept the overlapping keyword approach but added better size matching and regex. 
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked an LLM to help debug and proofread my `run_agent` function. I was running into some errors.
+- *What came back:* It helped me realize I was using a version from another example, which turned out to be from the Unit 4 example.
+- *What I changed:* I reverted back to the correct starter for this project, then updated it with my logic. And it worked fine after that.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
