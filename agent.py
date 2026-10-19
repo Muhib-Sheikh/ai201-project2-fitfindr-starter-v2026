@@ -14,11 +14,13 @@ Build and test your three tools in `tools.py` first. Then come here.
 """
 
 import re
-import config
 import trace
-from tools import search_listings, suggest_outfit, create_fit_card
-from generate import ModelUnavailable
 
+# import config
+import mcp_client
+
+# from generate import ModelUnavailable
+from tools import create_fit_card, suggest_outfit
 
 # ── session state ─────────────────────────────────────────────────────────────
 
@@ -157,17 +159,26 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     steps = 0
 
     steps += 1
-    trace.check_iterations(steps)
+    trace.check_iterations(steps) # type: ignore
 
     session["parsed"] = parse_query(session["query"])
 
     steps += 1
-    trace.check_iterations(steps)
+    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
 
-    session["search_results"] = search_listings(
-        session["parsed"]["description"],
-        session["parsed"]["size"],
-        session["parsed"]["max_price"],
+    # session["search_results"] = search_listings(
+    #     session["parsed"]["description"],
+    #     session["parsed"]["size"],
+    #     session["parsed"]["max_price"],
+    # )
+
+    session["search_results"] = mcp_client.call_tool(
+        "search_listings",
+        {
+            "description": session["parsed"]["description"],
+            "size": session["parsed"]["size"],
+            "max_price": session["parsed"]["max_price"],
+        },
     )
 
     if not session["search_results"]:
@@ -178,24 +189,24 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
 
     steps += 1
-    trace.check_iterations(steps)
+    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
 
     session["selected_item"] = session["search_results"][0]
 
     steps += 1
-    trace.check_iterations(steps)
+    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
 
     session["outfit_suggestion"] = suggest_outfit(
-        session["selected_item"],
+        session["selected_item"], # type: ignore
         session["wardrobe"],
     )
 
     steps += 1
-    trace.check_iterations(steps)
+    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
 
     session["fit_card"] = create_fit_card(
         session["outfit_suggestion"],
-        session["selected_item"],
+        session["selected_item"], # type: ignore
     )
 
     return session
