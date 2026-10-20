@@ -197,19 +197,103 @@ Rocking these vintage Levi's 501 jeans with fresh white sneakers for the ultimat
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before suggest_outfit | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item ID matches item passed to suggest_outfit | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card mentions selected item and is at most 2 sentences | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Search results respect maximum price | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
+**Criterion 1 — Matching query completes all three tools**
+
+Source: `run_eval.py::run_once`, `agent.py::run_agent`
+
+```text
+- stopped early: no
+- selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+- search_results: 10
+
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select_item
+      in:  item_id=lst_002
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are two easy ways to style the baby tee with what you already own:  **Outfit 1: Y2K Streetwear** Pair the…
+[5] create_fit_card
+      in:  dict with keys: outfit, new_item
+      out: Channeling total Y2K streetwear and grunge vibes with this adorable butterfly baby tee, available on Depop for…
 ```
 
+**Criterion 2 — Impossible query stops before suggest_outfit**
+
+Source: `run_eval.py::run_once`, `agent.py::run_agent`
+
+```text
+- stopped early: yes — I couldn't find anything that matched that. Try a broader search, a different size, or a higher price.
+- selected_item: (none)
+- search_results: 0
+
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      in:  dict with keys: search_results
+      out: I couldn't find anything that matched that. Try a broader search, a different size, or a higher price.
 ```
 
+**Criterion 3 — Selected item ID matches item passed to suggest_outfit**
+
+Source: `run_eval.py::run_once`, `agent.py::run_agent`
+
+```text
+- stopped early: no
+- selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+- search_results: 10
+
+[3] select_item
+      in:  item_id=lst_002
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are two easy ways to style the Y2K baby tee with what you already own:  **1. Casual Streetwear Vibe** *  …
+```
+
+**Criterion 4 — Fit card mentions selected item and is at most 2 sentences**
+
+Source: `run_eval.py::run_once`, `agent.py::run_agent`, `tools.py::create_fit_card`
+
+```text
+- stopped early: no
+- selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+
+Fit card:
+
+Scored this cute Y2K butterfly baby tee for just $18 on depop, and I'm obsessed with the effortless streetwear vibe. It's giving major early-2000s nostalgia whether I style it with baggy denim or crisp trousers!
+```
+
+**Criterion 5 — Search results respect maximum price**
+
+Source: `tools.py::search_listings`, through `mcp_client.call_tool`
+
+```text
+[('Y2K Baby Tee — Butterfly Print', 18.0),
+ ('Vintage Band Tee — Faded Grey', 19.0),
+ ('Mesh Long-Sleeve Top — Black', 15.0),
+ ('Oversized Crewneck Sweatshirt — Vintage Navy', 20.0),
+ ('Leather Belt — Brown, Braided', 12.0),
+ ('Henley Long Sleeve — Washed Burgundy', 16.0),
+ ('Vintage Polo Shirt — Forest Green', 18.0),
+ ('Bucket Hat — Reversible, Brown Plaid', 14.0)]
+All within budget: True
+```
 ---
 
 ## Verdicts and Diagnoses
