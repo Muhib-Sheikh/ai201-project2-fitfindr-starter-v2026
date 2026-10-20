@@ -18,8 +18,7 @@ import trace
 
 # import config
 import mcp_client
-
-# from generate import ModelUnavailable
+from generate import ModelUnavailable
 from tools import create_fit_card, suggest_outfit
 
 # ── session state ─────────────────────────────────────────────────────────────
@@ -149,22 +148,24 @@ def run_agent(query: str, wardrobe: dict) -> dict:
       • A handler for ModelUnavailable, so a bad key produces a message rather
         than a stack trace. The import is already at the top of this file.
     """
-    session = new_session(query, wardrobe)
-
-    # TODO: delete these two lines and build the loop.
-    # session["error"] = "The planning loop isn't built yet — see the TODO in agent.py."
 
     session = new_session(query, wardrobe)
 
     steps = 0
 
     steps += 1
-    trace.check_iterations(steps) # type: ignore
+    trace.check_iterations(steps)  # type: ignore
 
     session["parsed"] = parse_query(session["query"])
 
+    trace.step(
+        "parse_query",
+        inputs=session["query"],
+        returned=session["parsed"],
+    )
+
     steps += 1
-    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
+    trace.check_iterations(steps)  # pyright: ignore[reportAttributeAccessIssue]
 
     # session["search_results"] = search_listings(
     #     session["parsed"]["description"],
@@ -181,33 +182,81 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         },
     )
 
+    trace.step(
+        "search_listings (via MCP)",
+        inputs=str(session["parsed"]),
+        returned=session["search_results"],
+    )
+
     if not session["search_results"]:
         session["error"] = (
             "I couldn't find anything that matched that. "
             "Try a broader search, a different size, or a higher price."
         )
+
+        trace.step(
+            "branch",
+            inputs={
+                "search_results": session["search_results"],
+            },
+            returned=session["error"],
+        )
+
         return session
 
     steps += 1
-    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
+    trace.check_iterations(steps)  # pyright: ignore[reportAttributeAccessIssue]
 
     session["selected_item"] = session["search_results"][0]
 
-    steps += 1
-    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
-
-    session["outfit_suggestion"] = suggest_outfit(
-        session["selected_item"], # type: ignore
-        session["wardrobe"],
+    trace.step(
+        "select_item",
+        inputs=f"item_id={session['selected_item']['id']}",
+        returned=session["selected_item"],
     )
 
     steps += 1
-    trace.check_iterations(steps) # pyright: ignore[reportAttributeAccessIssue]
+    trace.check_iterations(steps)  # pyright: ignore[reportAttributeAccessIssue]
 
-    session["fit_card"] = create_fit_card(
-        session["outfit_suggestion"],
-        session["selected_item"], # type: ignore
-    )
+    try:
+        session["outfit_suggestion"] = suggest_outfit(
+            session["selected_item"],  # type: ignore
+            session["wardrobe"],
+        )
+
+        trace.step(
+            "suggest_outfit",
+            inputs={
+                "new_item": session["selected_item"],
+                "wardrobe": session["wardrobe"],
+            },
+            returned=session["outfit_suggestion"],
+        )
+
+        steps += 1
+        trace.check_iterations(steps)  # pyright: ignore[reportAttributeAccessIssue]
+
+        session["fit_card"] = create_fit_card(
+            session["outfit_suggestion"],
+            session["selected_item"],  # type: ignore
+        )
+
+        trace.step(
+            "create_fit_card",
+            inputs={
+                "outfit": session["outfit_suggestion"],
+                "new_item": session["selected_item"],
+            },
+            returned=session["fit_card"],
+        )
+
+    except ModelUnavailable:
+        session["error"] = (
+            "The model could not be reached. Check your GEMINI_API_KEY in .env."
+        )
+        trace.step(
+            returned=session["error"],
+        )
 
     return session
 

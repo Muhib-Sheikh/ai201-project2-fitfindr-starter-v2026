@@ -258,20 +258,47 @@ that produced it:
 
 **Happy path**
 
-```
+Command: `python app.py ask 'vintage graphic tee under $30' --trace`
 
+```text
+[1] parse_query
+      in:  vintage graphic tee under $30
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select_item
+      in:  item_id=lst_002
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: **Outfit 1: Casual Y2K Streetwear** Pair the butterfly baby tee with your **baggy straight-leg jeans** (dark w…
+[5] create_fit_card
+      in:  dict with keys: outfit, new_item
+      out: This Y2K butterfly baby tee is giving total early 2000s street style vibes and is up on my Depop for just $18.…
 ```
 
 **Empty search**
 
-```
+Command: `python app.py ask 'designer ballgown size XXS under $5' --trace`
 
+```text
+[1] parse_query
+      in:  designer ballgown size XXS under $5
+      out: dict with keys: description, size, max_price
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      in:  dict with keys: search_results
+      out: I couldn't find anything that matched that. Try a broader search, a different size, or a higher price.
 ```
 
 **On the MCP move:** <!-- what changed in your code, and whether anything
 behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
+I moved `search_listings` onto mcp by adding it to the `mcp_server` with a description and inputs. I replaced the direct function call with the mcp call and changed the input shape to match. I tested the tool the same way and everything worked as it did before the change. The only difference is taht the agent uses an MCP server to call `search_listings` instead of calling it directly.
 
 
 
