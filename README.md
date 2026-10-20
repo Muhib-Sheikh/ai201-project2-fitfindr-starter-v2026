@@ -43,8 +43,6 @@
 
 FitFindr is an agent that lets a user search for thrifted clothes based on a description, size, and max price. It searches the listings, picks the best matching item, and suggests outfits using the user's wardrobe. Then it creates a fit-card caption based on the selected item and outfit. If there is no match, it just gives some advice to the user on what they could change about their search.
 
-
-
 ---
 
 ## Tool Inventory
@@ -165,17 +163,18 @@ Rocking these vintage Levi's 501 jeans with fresh white sneakers for the ultimat
      "I gave Claude my search_listings spec. It returned None on no match
      instead of an empty list, so I changed it" is the level we want. -->
 
+
 **Moment 1**
 
-- *What I asked for:* I asked an LLM to help me understand the `search_listings` function and discussed some approaches.
-- *What came back:* It mentioned how a simple substring wouldn't work, but a split and filter method would be better. It also helped me realize we can use regex to handle sizes better.
-- *What I changed:* I kept the overlapping keyword approach but added better size matching and regex. 
+- *What I asked for:* I asked an LLM to help me understand how MCP works and how to move my `search_listings` tool to an MCP server.
+- *What came back:* It explained how the MCP server and client communicate, how tools are registered, and how to pass the correct inputs and handle the returned results.
+- *What I changed:* I registered `search_listings` in `mcp_server.py`, updated the agent to call it through `mcp_client.py`, and tested it to make sure the results were the same as before.
 
 **Moment 2**
 
-- *What I asked for:* I asked an LLM to help debug and proofread my `run_agent` function. I was running into some errors.
-- *What came back:* It helped me realize I was using a version from another example, which turned out to be from the Unit 4 example.
-- *What I changed:* I reverted back to the correct starter for this project, then updated it with my logic. And it worked fine after that.
+- *What I asked for:* I asked an LLM to help me understand and implement tracing in my agent because I wasn't familiar with how `trace.py` worked. I also ran into warnings in VS Code.
+- *What came back:* It explained how to use `trace.step()` to record the agent's steps and helped me figure out that Pylance was confusing my local `trace.py` with Python's built-in module.
+- *What I changed:* I added trace calls for the parsing, MCP search, item selection, outfit suggestion, fit card, and empty-search branch. I also verified that Python was importing the correct `trace.py` and that the traces printed correctly, even though VS Code still showed a warning.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
@@ -316,13 +315,17 @@ All within budget: True
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Matching query completes all three tools | 4 of 5 | MET (5/5) | All five tries completed the search, outfit suggestion, and fit card without stopping early. |
+| 2 | Impossible query stops before suggest_outfit | 5 of 5 | MET (5/5) | All five tries returned an empty search result, stopped before the second tool, and gave a message suggesting what to change. |
+| 3 | Selected item ID matches item passed onward | 5 of 5 | MET (5/5) | All five tries selected item `lst_002`. The agent passes `session["selected_item"]` directly to `suggest_outfit`, although the trace doesn't independently show the received ID. |
+| 4 | Fit card mentions the selected item and is at most 2 sentences | 4 of 5 | MET (5/5) | Every fit card mentioned the Y2K butterfly baby tee and had no more than two sentences. |
+| 5 | Search results respect maximum price | 5 of 5 | MET (5/5) | All five tries returned eight results with a $20 limit. A separate MCP call confirmed that all eight prices were within the limit, and the search code checks the price ceiling. |
 
 **Diagnoses**
+All five of my criteria met their targets, so there were no observed failures to diagnose. Looking back, I think my tests were too easy because I repeated the same query for several criteria. I would improve them by testing multiple queries and different clothing items.
+
+
+
 
 
 
@@ -382,9 +385,7 @@ Command: `python app.py ask 'designer ballgown size XXS under $5' --trace`
 behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
-I moved `search_listings` onto mcp by adding it to the `mcp_server` with a description and inputs. I replaced the direct function call with the mcp call and changed the input shape to match. I tested the tool the same way and everything worked as it did before the change. The only difference is taht the agent uses an MCP server to call `search_listings` instead of calling it directly.
-
-
+I moved `search_listings` onto mcp by adding it to the `mcp_server` with a description and inputs. I replaced the direct function call with the mcp call and changed the input shape to match. I tested the tool the same way and everything worked as it did before the change. The only difference is that the agent uses an MCP server to call `search_listings` instead of calling it directly.
 
 ---
 
@@ -397,24 +398,27 @@ I moved `search_listings` onto mcp by adding it to the `mcp_server` with a descr
 
 **What I changed:**
 
+I updated the `create_fit_card` prompt in `tools.py` telling the model to mention at least one specific clothing piece from the outfit suggestion.
+
 **Which failure it was meant to fix:**
+None of my original criteria failed, but I noticed that the fit cards were generic and didn't mention the specific clothing pieces suggested by `suggest_outfit`. I wanted the captions to be more connected to the actual outfit.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before suggest_outfit | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item ID matches item passed to suggest_outfit | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card mentions selected item and is at most 2 sentences | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Search results respect maximum price | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Did it help, and how do I know:**
 
 <!-- If it made things worse, say that. Honestly reported, that earns full
      credit and is more interesting than one that worked. -->
 
-
+Yes, the improvement helped. All five criteria still met their targets, but the fit cards became more specific. Before the change, none of the five fit cards in criterion 4 mentioned an exact clothing piece from the outfit suggestion. After the change, all five did.
 
 ---
 
@@ -424,7 +428,7 @@ I moved `search_listings` onto mcp by adding it to the `mcp_server` with a descr
      you did. "I ran out of time" is fine if it's true. Pretending nothing is
      left is not. -->
 
-
+None of my criteria missed their targets. However, they could be improved upon. In the future, I would test more situations like having multiple clothes and queries rather than a single example. I would also improve the tracing to get more information like the item ID received by `suggest_outfit`.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 

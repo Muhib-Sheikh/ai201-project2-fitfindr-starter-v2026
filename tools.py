@@ -270,6 +270,7 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Mention the item, price, and platform once.
     Make it sound like something someone would actually post about their outfit.
     Mention the overall vibe of the outfit too.
+    Mention at least one specific clothing piece from the outfit suggestion.
     """
 
     return generate(prompt)
